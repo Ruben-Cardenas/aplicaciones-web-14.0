@@ -3,8 +3,10 @@ import { generateAccessToken } from '../utils/generateToken';
 import { cache } from '../utils/cache';
 import dayjs from 'dayjs';
 import { User } from '../models/user';
+import { encryptionPassword } from '../utils/encryptionPassword';
+import { userInfo } from 'os';
 //Endpoint recibe un request, responde un response
-export const login =(req:Request, res:Response)=> {
+export const login =async (req:Request, res:Response)=> {
     //asignar tipo de dato despues  de:
     //inicializar la variable despues del =
     let number:number = 1;
@@ -12,6 +14,22 @@ export const login =(req:Request, res:Response)=> {
     /*dentro del body del request buscar las variables
     de username y password*/
     const { username , password } = req.body;
+
+    const user = await User.findOne({ username});
+
+    if (!user) {
+        return res.status(404).json({
+            message: 'Credenciales Incorrectas'
+        });
+    }
+
+    if (password !== user.password) {
+        return res.status(401).json({
+            message: 'Credenciales Incorrectas'
+        });
+    }
+
+    //const accessToken = generateAccessToken(user.id.toString());
 
     if (username !== 'admin' || password !== '12345') {
         return res.status(401).json({
@@ -115,37 +133,58 @@ export const saveUser = async (req: Request, res: Response) => {
 }
 
 
-export const updateUser = async (req:Request , res:Response ) =>{
-    try {
-        const{userId}=req.params;
-        const{emailUser, phone , password , role, name} = req.body
 
-        const user = await User.findById(userId);
+export const updateUser = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
 
-        if (!user){
-            return res.status (404).json({
-                massage: "usuario no encontado"
-            });
-        }
+    const { emailUser, phone, password, role, name } = req.body;
 
-        const userEmail=await User.find({email: emailUser})
-        if (userEmail && userEmail.length > 0){
-            return res.status(426).json({
-                massage: "el correo ya esta ocupado"
-            })
-        }
+    const user = await User.findById(id);
 
-        user.email= emailUser;
-        user.password = password != null ? password : user.password; //if ternario
-        user.role = role;
-        user.phone = phone;
-        user.name = name;
-
-        const updateUser=await user.save();
-
-        return res.json({ updateUser});
-    }catch(error){
-        console.log ("Error en UpdateUser: ", error);
-        return res.status(426).json({ error })
+    if (!user) {
+      return res.status(404).json({ message: "No existe este usuario" });
     }
-}
+
+    const userEmail = await User.find({ emailuser: emailUser }); //Buscamos si existe un usuario con el mismo email
+    const newPassword = await encryptionPassword(password); //Mandamos a llamar la funcion para encriptar la contraseña y lo guardamos en una variable
+
+    if (userEmail && userEmail.length > 0) {
+      return res.status(426).json({ message: "El email debe ser unico" });
+    }
+
+    user.name = name;
+    user.email = emailUser;
+    user.password = password != null ? newPassword : user.password; //Estabamos evaluando directamente el registro en lugar de lo que mandabamos al body
+    user.role = role;
+    user.phone = phone;
+     
+
+    const updateUser = await user.save();
+
+    return res.json({ updateUser });
+  } catch (e) {
+    console.log(e);
+  }
+};
+
+
+export const deleteUser = async (req: Request, res: Response) => {
+   const { userId } = req.params;
+
+    const user = await User.findById(userId);
+    if (!user) {
+        return res.status(404).json({ message: "No existe este usuario" });
+    }
+    user.status = false; //Deshabilitar el usuario
+    user.deleteDate = new Date(); //Fecha de eliminacion
+    const deletedUser = await user.save();
+
+    return res.json({
+        message: "Usuario eliminado correctamente",deletedUser
+    });
+} 
+
+
+
+
