@@ -5,6 +5,13 @@ import dayjs from 'dayjs';
 import { User } from '../models/user';
 import { encryptionPassword } from '../utils/encryptionPassword';
 import { userInfo } from 'os';
+import { Order } from '../models/Order';
+import { Product } from '../models/product';
+
+
+
+
+
 //Endpoint recibe un request, responde un response
 export const login =async (req:Request, res:Response)=> {
     //asignar tipo de dato despues  de:
@@ -156,7 +163,7 @@ export const updateUser = async (req: Request, res: Response) => {
     user.name = name;
     user.email = emailUser;
     user.password = password != null ? newPassword : user.password; //Estabamos evaluando directamente el registro en lugar de lo que mandabamos al body
-    user.role = role;
+    user.roles = role;
     user.phone = phone;
      
 
@@ -185,6 +192,160 @@ export const deleteUser = async (req: Request, res: Response) => {
     });
 } 
 
+export const saveOrder = async (req: Request, res: Response) => {
+  try {
+    const {
+      createdBy,
+      total,
+      subtotal,
+      status,
+      products
+    } = req.body;
 
+    const newOrder = new Order({
+      createdBy,
+      total,
+      subtotal,
+      status,
+      products,
+      creationDate: new Date(),
+      updateDate: undefined
+    });
+
+    const savedOrder = await newOrder.save();
+    return res.json(savedOrder);
+  } catch (error) {
+    return res.status(500).json({ message: "Error al guardar la orden", error });
+  }
+}; 
+
+
+
+
+export const deleteOrder = async (req: Request, res: Response) => {
+  try {
+    const { orderId } = req.params;
+
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ message: "No existe esta orden" });
+    }
+
+    order.status = "cancelada"; // Cambiar el estado
+    order.updateDate = new Date(); // Fecha de actualización
+
+    const deletedOrder = await order.save();
+
+    return res.json({
+      message: "Orden cancelada correctamente",
+      deletedOrder
+    });
+  } catch (error) {
+    return res.status(500).json({ message: "Error al cancelar la orden", error });
+  }
+};
+
+
+export const updateOrder = async (req: Request, res: Response) => {
+  try {
+    const { orderId } = req.params;
+    const { total, subtotal, status, products } = req.body;
+
+    const order = await Order.findById(orderId);
+
+    if (!order) {
+      return res.status(404).json({ message: "No existe esta orden" });
+    }
+
+    order.total = total ?? order.total;
+    order.subtotal = subtotal ?? order.subtotal;
+    order.status = status ?? order.status;
+    order.products = products ?? order.products;
+    order.updateDate = new Date();
+
+    const updatedOrder = await order.save();
+
+    return res.json({ message: "Orden actualizada correctamente", updatedOrder });
+  } catch (error) {
+    return res.status(500).json({ message: "Error al actualizar la orden", error });
+  }
+};
+  
+
+export const getAllOrders = async (req: Request, res: Response) => {
+  try {
+    const orders = await Order.find({ status: { $ne: 'eliminado' } });
+    return res.json(orders);
+  } catch (error) {
+    console.error("Error al obtener las órdenes activas:", error);
+    return res.status(500).json({
+      message: "Error al obtener las órdenes activas",
+      error: error instanceof Error ? error.message : error
+    });
+  }
+};
+
+
+
+export const createProduct = async (req: Request, res: Response) => {
+  try {
+    const { name, price, description, quantity } = req.body;
+    const newProduct = new Product({ name, price, description, quantity, status: true });
+    const savedProduct = await newProduct.save();
+    return res.json(savedProduct);
+  } catch (error) {
+    return res.status(500).json({ message: "Error al guardar el producto", error });
+  }
+};
+
+export const getAllProducts = async (req: Request, res: Response) => {
+  try {
+    const products = await Product.find(); 
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({ message: "Error al obtener los productos", error });
+  }
+};
+
+
+export const updateProduct = async (req: Request, res: Response) => {
+  try {
+    const { productId } = req.params;
+    const { name, price, description, quantity } = req.body;
+
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({ message: "Producto no encontrado" });
+    }
+
+    product.name = name ?? product.name;
+    product.price = price ?? product.price;
+    product.description = description ?? product.description;
+    product.quantity = quantity ?? product.quantity;
+
+    const updatedProduct = await product.save();
+    return res.json({ message: "Producto actualizado correctamente", updatedProduct });
+  } catch (error) {
+    return res.status(500).json({ message: "Error al actualizar el producto", error });
+  }
+};
+
+export const deleteProduct = async (req: Request, res: Response) => {
+  try {
+    const { productId } = req.params;
+
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({ message: "Producto no encontrado" });
+    }
+
+    product.status = false; 
+    const deletedProduct = await product.save();
+
+    return res.json({ message: "Producto dado de baja correctamente", deletedProduct });
+  } catch (error) {
+    return res.status(500).json({ message: "Error al dar de baja el producto", error });
+  }
+};
 
 
