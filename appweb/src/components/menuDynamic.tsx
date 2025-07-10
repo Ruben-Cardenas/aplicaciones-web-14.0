@@ -1,3 +1,4 @@
+// src/components/MenuDynamic.tsx
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Menu } from 'antd';
@@ -6,60 +7,80 @@ import {
   UserOutlined,
   BarChartOutlined,
 } from '@ant-design/icons';
+import { useAuth } from '../auth/AuthContext';
 
-// Mapeo de íconos
 const iconMap = {
   DashboardOutlined: <DashboardOutlined />,
   UserOutlined: <UserOutlined />,
   BarChartOutlined: <BarChartOutlined />,
 };
 
-// Interfaz para los ítems del menú
 interface MenuItem {
   title: string;
   path: string;
   icon: keyof typeof iconMap;
-  roles: string[];
+  roles: string[]; // roles válidos: 'administrador', 'user', 'cliente', 'usuario'
 }
 
 const MenuDynamic: React.FC = () => {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const { role } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
-    const fakeMenuData: MenuItem[] = [
-      {
-        title: 'Dashboard',
-        path: '/dashboard',
-        icon: 'DashboardOutlined',
-        roles: ['665a1f2b40fd3a12b3e77611'],
-      },
-      {
-        title: 'Usuarios',
-        path: '/users',
-        icon: 'UserOutlined',
-        roles: ['665a1f2b40fd3a12b3e77612'],
-      },
-      {
-        title: 'Reportes',
-        path: '/reports',
-        icon: 'BarChartOutlined',
-        roles: ['665a1f2b40fd3a12b3e77611', '665a1f2b40fd3a12b3e77612'],
-      },
-    ];
+  const fakeMenuData: MenuItem[] = [
+    {
+      title: 'Dashboard',
+      path: '/dashboard',
+      icon: 'DashboardOutlined',
+      roles: ['user', 'administrador', 'cliente', 'usuario'],
+    },
+    {
+      title: 'Usuarios',
+      path: '/users',
+      icon: 'UserOutlined',
+      roles: ['administrador'],
+    },
+    {
+      title: 'Reportes',
+      path: '/reports',
+      icon: 'BarChartOutlined',
+      roles: ['administrador', 'user', 'cliente'],
+    },
+    {
+      title: 'Lista de Usuarios',
+      path: '/usuarios',
+      icon: 'UserOutlined',
+      roles: ['administrador'],
+    },
+    {
+      title: 'Productos',
+      path: '/productos',
+      icon: 'BarChartOutlined',
+      roles: ['administrador', 'user'],
+    },
+    {
+      title: 'Órdenes',
+      path: '/ordenes',
+      icon: 'BarChartOutlined',
+      roles: ['administrador', 'user'],
+    },
+  ];
 
-    setTimeout(() => {
-      setMenuItems(fakeMenuData);
-    }, 500);
-  }, []);
+  setMenuItems(fakeMenuData);
+}, []);
+
 
   const renderMenu = () => {
-    return menuItems.map((item) => ({
-      key: item.path,
-      icon: iconMap[item.icon] || null,
-      label: item.title,
-    }));
+    if (!role) return [];
+    return menuItems
+      .filter((item) => item.roles.includes(role))
+      .map((item) => ({
+        key: item.path,
+        icon: iconMap[item.icon],
+        label: item.title,
+      }));
   };
 
   return (

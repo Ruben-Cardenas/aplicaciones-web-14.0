@@ -1,0 +1,19 @@
+/* src/components/Layout.css */
+
+.layout {
+  display: flex;
+  height: 100vh;
+}
+
+.sidebar {
+  width: 200px;
+  background-color: #001529; /* color oscuro del menú */
+}
+
+.content {
+  flex: 1;
+  padding: 24px;
+  background-color: #1f1f1f; /* 🔧 CAMBIO: ahora fondo oscuro para que el texto blanco se vea */
+  color: white;              /* 🔧 También forzamos color blanco del texto */
+  overflow-y: auto;
+}

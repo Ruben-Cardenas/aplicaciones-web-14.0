@@ -1,40 +1,42 @@
-import type { JSX } from "react";
-import UserForm from "../components/userform";
+import DashboardPage from './DashboardPage';
+import UsersPage from './UsersPage';
+import ReportsPage from './ReportsPage';
 
-export interface AppRoute {
-  path: string;
-  element: JSX.Element;
-  label?: string;
-  icon?: string;
-  roleIds?: string[]; 
-  hidden?: boolean;
-}
+import UserData from './UserData';
+import ProductData from './ProductData';
+import OrderData from './OrderData';
 
-const routes: AppRoute[] = [
-  {
-    path: '/',
-    element: <UserForm />,
-    label: 'Inicio',
-    icon: 'HomeOutlined',
-  },
-  {
-    path: '/users',
-    element: <UserForm />,
-    label: 'Usuarios',
-    icon: 'UserOutlined',
-  },
+const routes = [
   {
     path: '/dashboard',
-    element: <UserForm />,
-    label: 'Usuarios',
-    icon: 'UserOutlined',
+    element: <DashboardPage />,
+    roleIds: ['user', 'administrador', 'cliente', 'usuario'],
   },
   {
     path: '/users',
-    element: <UserForm />,
-    label: 'Usuarios',
-    icon: 'UserOutlined',
-  }
+    element: <UsersPage />,
+    roleIds: ['administrador'],
+  },
+  {
+    path: '/reports',
+    element: <ReportsPage />,
+    roleIds: ['administrador', 'user', 'cliente'],
+  },
+  {
+    path: '/usuarios',
+    element: <UserData />,
+    roleIds: ['administrador'],
+  },
+  {
+    path: '/productos',
+    element: <ProductData />,
+    roleIds: ['administrador', 'user'],
+  },
+  {
+    path: '/ordenes',
+    element: <OrderData />,
+    roleIds: ['administrador', 'user'],
+  },
 ];
 
 export default routes;

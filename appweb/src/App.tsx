@@ -1,35 +1,58 @@
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+// src/App.tsx
+import { Routes, Route, BrowserRouter, Navigate } from 'react-router-dom';
 import './App.css';
+import routes from './components/menuRoutes';
+import Login from './components/Login';
+import Layout from './components/Layout';
+import { useAuth, AuthProvider } from './auth/AuthContext';
+import React from 'react';
 
-import UserForm from './components/userform';
-import ProductTable from './components/producttable';
-import Order from './components/order';
+const PrivateRoute = ({ children }: { children: React.ReactElement }) => {
+  const { token } = useAuth();
+  return token ? children : <Navigate to="/login" replace />;
+};
+
+const AppRoutes = () => {
+  const { role } = useAuth();
+
+  return (
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route
+        path="/"
+        element={
+          <PrivateRoute>
+            <Layout />
+          </PrivateRoute>
+        }
+      >
+        <Route index element={<Navigate to="/dashboard" replace />} />
+        {routes.map((route) => (
+          <Route
+            key={route.path}
+            path={route.path}
+            element={
+              route.roleIds.includes(role || '') ? (
+                route.element
+              ) : (
+                <Navigate to="/dashboard" replace />
+              )
+            }
+          />
+        ))}
+      </Route>
+      <Route path="*" element={<Navigate to="/login" replace />} />
+    </Routes>
+  );
+};
 
 function App() {
   return (
-    <Router>
-      <>
-        {/* Navegación */}
-        <nav>
-          <ul>
-            <li><Link to="/userform">User Form</Link></li>
-            <li><Link to="/producttable">Product Table</Link></li>
-            <li><Link to="/order">Order</Link></li>
-          </ul>
-        </nav>
-
-        {/* Rutas */}
-        <Routes>
-          <Route path="/userform" element={<UserForm />} />
-          <Route path="/producttable" element={<ProductTable />} />
-          <Route path="/order" element={<Order />} />
-        </Routes>
-
-        <p className="read-the-docs">
-          Click on the Vite and React logos to learn more
-        </p>
-      </>
-    </Router>
+    <AuthProvider>
+      <BrowserRouter>
+        <AppRoutes />
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 
