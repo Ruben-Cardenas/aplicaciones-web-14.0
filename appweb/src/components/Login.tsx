@@ -20,35 +20,34 @@ const Login: React.FC = () => {
   const { login } = useAuth();
 
   const onFinish: FormProps<FieldType>['onFinish'] = async (values) => {
-    try {
-      const response = await fetch('http://localhost:3000/api/auth/login-user', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: values.userName, // <-- aquí el cambio importante
-          password: values.password,
-          role: values.role,
-        }),
-      });
+    const { userName, password, role } = values;
 
-      if (!response.ok) throw new Error('Error en la autenticación');
+    
+    const usuarioValido = {
+      userName: 'ruben_admin',
+      password: '1234',
+      role: 'administrador',
+    };
 
-      const data = await response.json();
-      console.log('✅ Login correcto:', data);
-
-      login(data.accessToken, data.selectedRole);
+    if (
+      userName === usuarioValido.userName &&
+      password === usuarioValido.password &&
+      role === usuarioValido.role
+    ) {
+      // Simular token
+      const fakeToken = 'token_simulado_123';
+      login(fakeToken, role);
       message.success('Inicio de sesión exitoso');
 
       // Redirigir según rol
-      if (data.selectedRole === 'administrador') {
+      if (role === 'administrador') {
         navigate('/users');
       } else {
         navigate('/dashboard');
       }
 
       form.resetFields();
-    } catch (error) {
-      console.error('❌ Error al iniciar sesión:', error);
+    } else {
       message.error('⚠️ Usuario, contraseña o rol incorrectos');
     }
   };

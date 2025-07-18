@@ -37,9 +37,7 @@ export default function OrderData() {
           subtotal: 100,
           total: 120,
           status: 'pendiente',
-          products: [
-            { productId: '1', quantity: 2, price: 50 },
-          ],
+          products: [{ productId: '1', quantity: 2, price: 50 }],
         },
         {
           id: 2,
@@ -47,9 +45,7 @@ export default function OrderData() {
           subtotal: 200,
           total: 230,
           status: 'completado',
-          products: [
-            { productId: '2', quantity: 4, price: 50 },
-          ],
+          products: [{ productId: '2', quantity: 4, price: 50 }],
         },
       ];
       setOrders(initialOrders);
@@ -87,8 +83,15 @@ export default function OrderData() {
     });
   };
 
-  const handleSave = () => {
-    form.validateFields().then((values) => {
+  const handleSave = async () => {
+    try {
+      const values = await form.validateFields();
+
+      if (values.total < values.subtotal) {
+        message.error('El total no puede ser menor que el subtotal');
+        return;
+      }
+
       const newOrder: Order = {
         id: isCreating ? Date.now() : (selectedOrder?.id ?? Date.now()),
         products: [],
@@ -108,7 +111,9 @@ export default function OrderData() {
       }
 
       setIsModalVisible(false);
-    });
+    } catch {
+      // Errores ya manejados por las reglas del formulario
+    }
   };
 
   const filtered = orders.filter((o) =>
@@ -161,30 +166,62 @@ export default function OrderData() {
           <Form.Item
             name="createdBy"
             label="Creado por"
-            rules={[{ required: true, message: 'Campo requerido' }]}
+            rules={[
+              { required: true, message: 'Campo requerido' },
+              { min: 3, message: 'Debe tener al menos 3 caracteres' },
+              {
+                pattern: /^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]+$/,
+                message: 'Solo se permiten letras',
+              },
+            ]}
           >
             <Input />
           </Form.Item>
+
           <Form.Item
             name="subtotal"
             label="Subtotal"
-            rules={[{ required: true, message: 'Subtotal requerido' }]}
+            rules={[
+              { required: true, message: 'Subtotal requerido' },
+              {
+                type: 'number',
+                min: 0,
+                message: 'El subtotal debe ser un número positivo',
+                transform: (value) => Number(value),
+              },
+            ]}
           >
             <Input type="number" />
           </Form.Item>
+
           <Form.Item
             name="total"
             label="Total"
-            rules={[{ required: true, message: 'Total requerido' }]}
+            rules={[
+              { required: true, message: 'Total requerido' },
+              {
+                type: 'number',
+                min: 0,
+                message: 'El total debe ser un número positivo',
+                transform: (value) => Number(value),
+              },
+            ]}
           >
             <Input type="number" />
           </Form.Item>
+
           <Form.Item
             name="status"
             label="Estado"
-            rules={[{ required: true, message: 'Estado requerido' }]}
+            rules={[
+              { required: true, message: 'Estado requerido' },
+              {
+                pattern: /^(pendiente|completado|cancelado)$/i,
+                message: 'Estado debe ser: pendiente, completado o cancelado',
+              },
+            ]}
           >
-            <Input />
+            <Input placeholder="pendiente | completado | cancelado" />
           </Form.Item>
         </Form>
       </Modal>

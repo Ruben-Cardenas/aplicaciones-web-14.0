@@ -157,35 +157,65 @@ export default function ProductData() {
           <Form.Item
             name="name"
             label="Nombre"
-            rules={[{ required: true, message: 'Nombre requerido' }]}
+            rules={[
+              { required: true, message: 'Nombre requerido' },
+              { whitespace: true, message: 'El nombre no puede estar vacío' },
+              { min: 3, message: 'El nombre debe tener al menos 3 caracteres' },
+            ]}
           >
             <Input />
           </Form.Item>
+
           <Form.Item
             name="description"
             label="Descripción"
-            rules={[{ required: true, message: 'Descripción requerida' }]}
+            rules={[
+              { required: true, message: 'Descripción requerida' },
+              { whitespace: true, message: 'La descripción no puede estar vacía' },
+              { min: 5, message: 'La descripción debe tener al menos 5 caracteres' },
+            ]}
           >
             <Input />
           </Form.Item>
+
           <Form.Item
             name="price"
             label="Precio"
-            rules={[{ required: true, type: 'number', message: 'Precio requerido' }]}
+            rules={[
+              { required: true, message: 'Precio requerido' },
+              {
+                validator: (_, value) =>
+                  value > 0
+                    ? Promise.resolve()
+                    : Promise.reject(new Error('El precio debe ser mayor a 0')),
+              },
+            ]}
           >
             <InputNumber
-              min={0}
+              min={0.01}
+              step={0.01}
               style={{ width: '100%' }}
               placeholder="Ingresa el precio"
+              stringMode
             />
           </Form.Item>
+
           <Form.Item
             name="quantity"
             label="Cantidad"
-            rules={[{ required: true, type: 'number', message: 'Cantidad requerida' }]}
+            rules={[
+              { required: true, message: 'Cantidad requerida' },
+              {
+                validator: (_, value) =>
+                  value >= 0
+                    ? Promise.resolve()
+                    : Promise.reject(new Error('La cantidad no puede ser negativa')),
+              },
+            ]}
           >
             <InputNumber
               min={0}
+              step={1}
               style={{ width: '100%' }}
               placeholder="Ingresa la cantidad"
             />

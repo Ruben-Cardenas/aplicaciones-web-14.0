@@ -1,4 +1,3 @@
-// src/components/UserData.tsx
 import { useState, useEffect } from 'react';
 import { Table, Input, Button, Modal, Form, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
@@ -17,7 +16,6 @@ export default function UserData() {
   const [isCreating, setIsCreating] = useState(false);
   const [form] = Form.useForm();
 
-  // Cargar usuarios desde localStorage
   useEffect(() => {
     const savedUsers = localStorage.getItem('users');
     if (savedUsers) {
@@ -33,7 +31,6 @@ export default function UserData() {
     }
   }, []);
 
-  // Guardar en localStorage
   const saveToLocalStorage = (data: User[]) => {
     setUsers(data);
     localStorage.setItem('users', JSON.stringify(data));
@@ -53,8 +50,30 @@ export default function UserData() {
     setIsModalVisible(true);
   };
 
-  const handleSave = () => {
-    form.validateFields().then((values) => {
+  const handleSave = async () => {
+    try {
+      const values = await form.validateFields();
+
+      const duplicateName = users.find(
+        (u) =>
+          u.name.trim().toLowerCase() === values.name.trim().toLowerCase() &&
+          u.id !== selectedUser?.id
+      );
+      if (duplicateName) {
+        message.error('Ya existe un usuario con ese nombre');
+        return;
+      }
+
+      const duplicateEmail = users.find(
+        (u) =>
+          u.email.trim().toLowerCase() === values.email.trim().toLowerCase() &&
+          u.id !== selectedUser?.id
+      );
+      if (duplicateEmail) {
+        message.error('Ya existe un usuario con ese correo');
+        return;
+      }
+
       if (isCreating) {
         const newUser: User = {
           id: Date.now(),
@@ -70,8 +89,11 @@ export default function UserData() {
         saveToLocalStorage(updatedUsers);
         message.success('Usuario actualizado');
       }
+
       setIsModalVisible(false);
-    });
+    } catch {
+      // Errores ya son manejados por las reglas del formulario
+    }
   };
 
   const handleDelete = (id: number) => {
@@ -113,11 +135,7 @@ export default function UserData() {
           >
             Editar
           </Button>
-          <Button
-            danger
-            size="small"
-            onClick={() => handleDelete(record.id)}
-          >
+          <Button danger size="small" onClick={() => handleDelete(record.id)}>
             Borrar
           </Button>
         </>
@@ -157,7 +175,11 @@ export default function UserData() {
           <Form.Item
             name="name"
             label="Nombre"
-            rules={[{ required: true, message: 'Nombre requerido' }]}
+            rules={[
+              { required: true, message: 'Nombre requerido' },
+              { whitespace: true, message: 'El nombre no puede estar vacío' },
+              { min: 3, message: 'El nombre debe tener al menos 3 caracteres' },
+            ]}
           >
             <Input />
           </Form.Item>
